@@ -1,0 +1,30 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy to EC2 via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_KEY }}
+        script: |
+          if [ ! -d "/home/ec2-user/app" ]; then
+            git clone https://github.com/YashRajoria0327/devops-demo-app.git /home/ec2-user/app
+          fi
+          cd /home/ec2-user/app
+          git pull
+          docker build -t myapp .
+          docker stop myapp || true
+          docker rm myapp || true
+          docker run -d -p 80:80 --name myapp myapp
