@@ -1,28 +1,17 @@
-name: Deploy to EC2
+steps:
+  - name: Debug key format
+    run: |
+      echo "${{ secrets.EC2_KEY }}" | head -2
+      echo "..."
+      echo "${{ secrets.EC2_KEY }}" | tail -2
 
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Debug key format
-        run: |
-          echo "${{ secrets.EC2_KEY }}" | head -2
-          echo "..."
-          echo "${{ secrets.EC2_KEY }}" | tail -2
-
-      - name: Test SSH Connection
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            echo "SSH SUCCESS"
-            hostname
-            whoami
+  - name: Test SSH Connection
+    uses: appleboy/ssh-action@v1.0.3
+    with:
+      host: ${{ secrets.EC2_HOST }}
+      username: ${{ secrets.EC2_USER }}
+      key: ${{ secrets.EC2_KEY }}
+      script: |
+        echo "SSH SUCCESS"
+        hostname
+        whoami
