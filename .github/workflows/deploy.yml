@@ -17,15 +17,9 @@ jobs:
         shell: bash
         run: |
           mkdir -p ~/.ssh
-
-          # Decode key into proper location
-          echo "${{ secrets.EC2_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
+          printf '%s\n' "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          # ✅ Validate the key loaded correctly (shows fingerprint, not just header)
-          ssh-keygen -l -f ~/.ssh/id_rsa
-
-          # Add host to known_hosts (cleaner than StrictHostKeyChecking=no)
+          ssh-keygen -l -f ~/.ssh/id_rsa   # validates key — must print fingerprint
           ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Test SSH Connection
@@ -42,4 +36,4 @@ jobs:
           ssh -i ~/.ssh/id_rsa \
             -o IdentitiesOnly=yes \
             "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
-            "cd /your/app && git pull && ./restart.sh"
+            "cd /your/app/path && git pull origin main && pm2 restart all"
