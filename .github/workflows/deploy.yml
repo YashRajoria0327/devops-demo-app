@@ -13,23 +13,33 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Decode SSH Key
+      - name: Setup SSH Key
         shell: bash
         run: |
-          echo "${{ secrets.EC2_KEY_B64 }}" | base64 -d > private_key
-          chmod 600 private_key
+          mkdir -p ~/.ssh
 
-          echo "Checking key format..."
-          head -2 private_key
+          # Decode key into proper location
+          echo "${{ secrets.EC2_KEY_B64 }}" | base64 -d > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # ✅ Validate the key loaded correctly (shows fingerprint, not just header)
+          ssh-keygen -l -f ~/.ssh/id_rsa
+
+          # Add host to known_hosts (cleaner than StrictHostKeyChecking=no)
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Test SSH Connection
         shell: bash
         run: |
-          ssh -vvv -i private_key \
-          -o StrictHostKeyChecking=no \
-          -o IdentitiesOnly=yes \
-          ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            echo 'SSH SUCCESS'
-            hostname
-            whoami
-          "
+          ssh -i ~/.ssh/id_rsa \
+            -o IdentitiesOnly=yes \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+            "echo 'SSH SUCCESS'; hostname; whoami"
+
+      - name: Deploy
+        shell: bash
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+            -o IdentitiesOnly=yes \
+            "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+            "cd /your/app && git pull && ./restart.sh"
