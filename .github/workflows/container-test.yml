@@ -1,0 +1,34 @@
+name: Docker Container Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  container-test:
+    runs-on: self-hosted
+
+    steps:
+      - name: Pull image from Docker Hub
+        run: |
+          docker pull yashrajoria0327/devops-demo-app:latest
+
+      - name: Remove old test container
+        run: |
+          docker rm -f devops-demo-app-test 2>/dev/null || true
+
+      - name: Create test container
+        run: |
+          docker run -d \
+            --name devops-demo-app-test \
+            -p 8081:80 \
+            yashrajoria0327/devops-demo-app:latest
+
+      - name: Check container
+        run: |
+          docker ps
+          curl -f http://localhost:8081
+
+      - name: Cleanup test container
+        if: always()
+        run: |
+          docker rm -f devops-demo-app-test 2>/dev/null || true
