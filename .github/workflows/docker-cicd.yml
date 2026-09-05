@@ -29,7 +29,9 @@ jobs:
         with:
           context: .
           push: true
-          tags: yashrajoria0327/devops-demo-app:latest
+          tags: |
+                  yashrajoria0327/devops-demo-app:latest
+                  yashrajoria0327/devops-demo-app:${{ github.sha }}
 
 
   # -------------------------
