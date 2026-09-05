@@ -49,7 +49,7 @@ jobs:
       - name: Deploy application
         run: |
           chmod +x scripts/deploy.sh
-          ./scripts/deploy.sh
+          ./scripts/deploy.sh ${{ github.sha }}
 
       - name: Verify application
         run: |

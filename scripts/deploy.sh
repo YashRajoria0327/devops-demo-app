@@ -1,11 +1,15 @@
 #!/bin/bash
 
 set -e
+if [ -z "$1" ]; then
+  echo "Usage: $0 <image-tag>"
+  exit 1
+fi
 
-IMAGE="yashrajoria0327/devops-demo-app:latest"
+IMAGE="yashrajoria0327/devops-demo-app:${1}"
 CONTAINER="devops-demo-app"
 
-echo "Pulling latest image..."
+echo "Pulling image: $IMAGE"
 docker pull "$IMAGE"
 
 echo "Stopping old container..."
