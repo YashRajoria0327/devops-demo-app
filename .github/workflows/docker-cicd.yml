@@ -8,10 +8,10 @@ on:
 jobs:
 
   # -------------------------
-  # CI: Build and Push Image
+  # CI: Build and Push Images
   # -------------------------
   build-and-push:
-    name: Build and Push Docker Image
+    name: Build and Push Docker Images
     runs-on: ubuntu-latest
 
     steps:
@@ -24,15 +24,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push Docker image
+      - name: Build and push frontend image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
           tags: |
-                  yashrajoria0327/devops-demo-app:latest
-                  yashrajoria0327/devops-demo-app:${{ github.sha }}
+            yashrajoria0327/devops-demo-app:latest
+            yashrajoria0327/devops-demo-app:${{ github.sha }}
 
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            yashrajoria0327/devops-demo-backend:latest
+            yashrajoria0327/devops-demo-backend:${{ github.sha }}
 
   # -------------------------
   # CD: Deploy to AlmaLinux
@@ -54,3 +62,5 @@ jobs:
       - name: Verify application
         run: |
           curl -f http://localhost:8080
+          curl -f http://localhost:5000/health
+          curl -f http://localhost:5000/api/db-test

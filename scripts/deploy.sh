@@ -1,32 +1,38 @@
 #!/bin/bash
 
 set -e
+
 if [ -z "$1" ]; then
   echo "Usage: $0 <image-tag>"
   exit 1
 fi
 
-IMAGE="yashrajoria0327/devops-demo-app:${1}"
-CONTAINER="devops-demo-app"
+export IMAGE_TAG="$1"
 
-echo "Pulling image: $IMAGE"
-docker pull "$IMAGE"
+echo "Deploying image tag: $IMAGE_TAG"
 
-echo "Stopping old container..."
-docker stop "$CONTAINER" 2>/dev/null || true
+echo "Pulling application images..."
+docker compose pull frontend backend
 
-echo "Removing old container..."
-docker rm "$CONTAINER" 2>/dev/null || true
-
-echo "Starting new container..."
-docker run -d \
-  --name "$CONTAINER" \
-  --restart unless-stopped \
-  -p 8080:80 \
-  "$IMAGE"
+echo "Starting application stack..."
+docker compose up -d
 
 echo "Deployment completed."
 
-echo "Testing application..."
+echo "Checking service status..."
+docker compose ps
+
+echo "Testing frontend..."
 sleep 2
 curl -f http://localhost:8080
+
+echo
+echo "Testing backend..."
+curl -f http://localhost:5000/health
+
+echo
+echo "Testing database connection..."
+curl -f http://localhost:5000/api/db-test
+
+echo
+echo "All deployment checks passed."
