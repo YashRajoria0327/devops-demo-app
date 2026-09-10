@@ -2,6 +2,14 @@
 
 set -e
 
+ENV_FILE="/home/devops/.config/devops-demo-app/.env"
+
+if [ ! -f "$ENV_FILE" ]; then
+  echo "ERROR: Environment file not found: $ENV_FILE"
+  exit 1
+fi
+
+
 if [ -z "$1" ]; then
   echo "Usage: $0 <image-tag>"
   exit 1
@@ -12,10 +20,10 @@ export IMAGE_TAG="$1"
 echo "Deploying image tag: $IMAGE_TAG"
 
 echo "Pulling application images..."
-docker compose pull frontend backend
+docker compose --env-file "$ENV_FILE" pull frontend backend
 
 echo "Starting application stack..."
-docker compose up -d
+docker compose --env-file "$ENV_FILE" up -d
 
 echo "Deployment completed."
 
