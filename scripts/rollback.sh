@@ -29,6 +29,22 @@ echo "Rollback completed."
 echo "Checking service status..."
 docker compose --env-file "$ENV_FILE" ps
 
+echo "Waiting for backend to become ready..."
+
+for i in {1..30}; do
+    if curl -fs http://localhost:5000/health >/dev/null 2>&1; then
+        echo "Backend is ready."
+        break
+    fi
+
+    if [ "$i" -eq 30 ]; then
+        echo "ERROR: Backend did not become ready in time."
+        exit 1
+    fi
+
+    sleep 2
+done
+
 echo "Testing frontend..."
 curl -f http://localhost:8080
 
