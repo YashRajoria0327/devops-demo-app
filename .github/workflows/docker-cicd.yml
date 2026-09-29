@@ -1,3 +1,4 @@
+
 name: Docker CI/CD
 
 on:
@@ -6,10 +7,6 @@ on:
       - main
 
 jobs:
-
-  # -------------------------
-  # CI: Build and Push Images
-  # -------------------------
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
@@ -24,7 +21,33 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push frontend image
+      # Build frontend locally
+      - name: Build frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: yashrajoria0327/devops-demo-app:${{ github.sha }}
+
+      # Build backend locally
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          load: true
+          tags: yashrajoria0327/devops-demo-backend:${{ github.sha }}
+
+      # Trivy security scan
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: yashrajoria0327/devops-demo-backend:${{ github.sha }}
+          format: table
+          exit-code: 0
+          severity: HIGH,CRITICAL
+
+      # Push frontend after scan
+      - name: Push frontend image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -33,7 +56,8 @@ jobs:
             yashrajoria0327/devops-demo-app:latest
             yashrajoria0327/devops-demo-app:${{ github.sha }}
 
-      - name: Build and push backend image
+      # Push backend after scan
+      - name: Push backend image
         uses: docker/build-push-action@v6
         with:
           context: ./backend
@@ -41,6 +65,26 @@ jobs:
           tags: |
             yashrajoria0327/devops-demo-backend:latest
             yashrajoria0327/devops-demo-backend:${{ github.sha }}
+
+  deploy:
+    name: Deploy to AlmaLinux VM
+    needs: build-and-push
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Deploy application
+        run: |
+          chmod +x scripts/deploy.sh
+          ./scripts/deploy.sh ${{ github.sha }}
+
+      - name: Verify application
+        run: |
+          curl -f http://localhost:8080
+          curl -f http://localhost:5000/health
+          curl -f http://localhost:5000/api/db-test
 
   # -------------------------
   # CD: Deploy to AlmaLinux
