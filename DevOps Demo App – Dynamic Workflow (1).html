@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DevOps Demo App – Dynamic Workflow</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#59616b;--bd:#d7dbe0;--ac:#1f5fd6;--ok:#12794a;--bad:#c62828;--wn:#9a6200;--gh:#6f42c1;--bd2:#1f5fd6;--sc:#c77d00;--hub:#0a7f8f;--dp:#1d8a4e;--db:#c4571a;--app:#2a7fb8;--pl:#6b7280;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13161a;--card:#1c2026;--tx:#e8eaed;--mut:#a0a7b0;--bd:#343a42;--ac:#7aa7ff;--ok:#4cd08a;--bad:#ff7b72;--wn:#f0b429;--gh:#a98bf0;--bd2:#7aa7ff;--sc:#f0b429;--hub:#4cc3d4;--dp:#4cd08a;--db:#ff9a62;--app:#6cc0f0;--pl:#9aa3ad}}
+:root[data-theme="dark"]{--bg:#13161a;--card:#1c2026;--tx:#e8eaed;--mut:#a0a7b0;--bd:#343a42;--ac:#7aa7ff;--ok:#4cd08a;--bad:#ff7b72;--wn:#f0b429;--gh:#a98bf0;--bd2:#7aa7ff;--sc:#f0b429;--hub:#4cc3d4;--dp:#4cd08a;--db:#ff9a62;--app:#6cc0f0;--pl:#9aa3ad}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.w{max-width:980px;margin:0 auto;padding:14px}
+h1{font-size:21px;margin:0 0 2px}h2{font-size:16px;margin:14px 0 6px}h4{margin:0 0 6px;font-size:13px;color:var(--mut)}
+.s{color:var(--mut);margin:0 0 10px}
+.ban{background:var(--card);border:1px solid var(--bd);border-left:4px solid var(--wn);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px}
+.leg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;font-size:12px}
+.b{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;border:1px solid currentColor;font-weight:600;white-space:nowrap}
+.b.impl,.b.ok{color:var(--ok)}.b.pend,.b.warn{color:var(--wn)}.b.plan{color:var(--pl)}.b.fail{color:var(--bad)}.b.act{color:var(--ok)}.b.prop{color:var(--ac)}
+button,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:7px 12px;cursor:pointer}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+[role=tab][aria-selected=true]{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tabs,.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.row label{font-size:13px;color:var(--mut)}
+.grp{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:4px}
+.dn{text-align:center;color:var(--mut);font-size:18px;line-height:1.3}
+ul.fl{list-style:none;display:flex;flex-wrap:wrap;gap:8px 24px;padding:0;margin:0}
+.fl li{position:relative;flex:1 1 150px;max-width:230px}
+.fl li:not(:last-child)::after{content:"→";position:absolute;right:-18px;top:50%;transform:translateY(-50%);color:var(--mut)}
+.nd{width:100%;height:100%;text-align:left;border-left:5px solid var(--c,var(--bd));padding:8px 10px;display:block;transition:.25s}
+.nd b{display:block;font-size:14px}.nd small{display:block;color:var(--mut);font-size:12px}.nd em{font-style:normal;font-size:12px;font-weight:600}
+.nd[aria-pressed=true]{box-shadow:0 0 0 2px var(--ac)}
+.gh{--c:var(--gh)}.bd{--c:var(--bd2)}.sc{--c:var(--sc)}.hub{--c:var(--hub)}.dp{--c:var(--dp)}.db{--c:var(--db)}.app{--c:var(--app)}
+.nd.pending{opacity:.8}.nd.run{border-color:var(--ac);animation:pu 1s infinite}.nd.ok em{color:var(--ok)}.nd.fail{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card))}.nd.fail em{color:var(--bad)}.nd.warn{border-color:var(--wn)}.nd.warn em{color:var(--wn)}.nd.skip{opacity:.55;text-decoration:line-through}.nd.skip em{text-decoration:none}.nd.lit{border-color:var(--ac);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 35%,transparent)}
+@keyframes pu{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--ac) 30%,transparent)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.det,.out,.log,.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-top:10px}
+.det h3{margin:0 0 4px;font-size:16px}.det ul{margin:6px 0 0;padding-left:20px}
+.fb{margin-top:8px;padding:8px;border-radius:8px;background:var(--bg);border:1px dashed var(--bd)}
+.out:empty{display:none}
+code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:13px}
+.log{font:13px/1.6 ui-monospace,Menlo,Consolas,monospace;min-height:64px}
+.rt{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:stretch}
+.host{border:2px dashed var(--bd);border-radius:12px;padding:10px;background:var(--card)}
+.net{border:2px solid var(--ac);border-radius:10px;padding:10px;margin-top:6px}
+.net ul{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.net li::after{display:none}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.cards .card{margin:0}.card h3{font-size:14px;margin:0 0 4px}.card p{margin:0;font-size:13px;color:var(--mut)}
+.hid{display:none!important}
+.warnbox{border:1px solid var(--wn);border-left:5px solid var(--wn);background:var(--card);border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:10px}
+@media(max-width:640px){.fl li{flex:1 1 100%;max-width:none}.fl li:not(:last-child)::after{content:"↓";position:static;display:block;text-align:center;transform:none;height:18px;line-height:18px}.rt{grid-template-columns:1fr}.net ul{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>DevOps Demo App – Dynamic Workflow</h1>
+<p class="s">AlmaLinux 10.2 · Git/GitHub · GitHub Actions · Docker Hub · Docker Compose · Nginx · Flask · MySQL 8.4 · Trivy</p>
+<div class="ban"><b>Educational simulation.</b> No commands run, nothing is deployed, and the VM is never touched. Example tags are fictional.</div>
+<div class="leg" aria-label="Legend"><span class="b impl">Implemented</span><span class="b pend">Pending verification</span><span class="b plan">Planned</span><span class="b act">Actual behavior</span><span class="b prop">Proposed behavior</span></div>
+<div class="tabs" role="tablist" id="tabs">
+<button role="tab" aria-selected="true" aria-controls="p" id="t-p">1. CI/CD Pipeline</button>
+<button role="tab" aria-selected="false" aria-controls="r" id="t-r">2. Runtime Architecture</button>
+<button role="tab" aria-selected="false" aria-controls="b" id="t-b">3. Rollback</button>
+<button role="tab" aria-selected="false" aria-controls="x" id="t-x">4. Security &amp; Operations</button>
+</div>
+
+<section id="p" role="tabpanel" aria-labelledby="t-p">
+<div class="row">
+<button id="p-play">▶ Play</button><button id="p-step">Step ›</button><button id="p-reset">Reset</button>
+<label>Scenario <select id="p-sc"><option value="none">Everything succeeds</option><option value="build">Build fails</option><option value="trivy">Trivy finds HIGH/CRITICAL issues</option><option value="push">Docker Hub push fails</option><option value="deploy">Deployment on VM fails</option><option value="health">Health checks fail</option></select></label>
+<label><input type="checkbox" id="p-prop"> Show proposed Trivy blocking</label>
+</div>
+<div id="p-fl"></div><div class="out" id="p-out" role="status"></div><div class="det" id="p-det" aria-live="polite"></div>
+</section>
+
+<section id="r" role="tabpanel" aria-labelledby="t-r" class="hid">
+<p class="s">Pick a request to see which components handle it. Not every backend request reaches MySQL.</p>
+<div class="row"><button data-q="/">Browser → <code>/</code></button><button data-q="/health">GET /health</button><button data-q="/api/hello">GET /api/hello</button><button data-q="/api/db-test">GET /api/db-test</button><button id="r-reset">Reset</button></div>
+<div class="rt">
+<ul class="fl" style="display:block"><li style="max-width:none"><button class="nd gh" id="n-b" data-n="b" aria-pressed="false"><b>🌐 Browser</b><small>http://VM-IP:8080 or :5000</small></button></li></ul>
+<div class="host"><h4>AlmaLinux VM (Docker host)</h4>
+<div class="net"><h4>Docker Compose network · services reach each other by name</h4>
+<ul class="fl">
+<li><button class="nd app" id="n-f" data-n="f" aria-pressed="false"><b>Frontend · Nginx</b><small>host 8080 → container 80</small></button></li>
+<li><button class="nd app" id="n-k" data-n="k" aria-pressed="false"><b>Backend · Flask</b><small>host 5000 → container 5000</small></button></li>
+<li><button class="nd db" id="n-m" data-n="m" aria-pressed="false"><b>MySQL 8.4 · <code>mysql</code></b><small>container 3306 · no host port · db devopsdb</small></button></li>
+</ul></div>
+<p class="s" style="margin:8px 0 0;font-size:13px">💾 Named volume <code>mysql_data</code> keeps database files when the container is recreated. It is persistence, not a backup.</p></div>
+</div>
+<div class="log" id="r-log">Choose a request above.</div>
+<div class="det" id="r-det" aria-live="polite">Click a component for details. Note: the frontend does not currently proxy API calls through Nginx; the browser calls the backend on port 5000 directly (a possible improvement).</div>
+</section>
+
+<section id="b" role="tabpanel" aria-labelledby="t-b" class="hid">
+<div class="warnbox"><b>⚠ Application rollback ≠ database recovery.</b> Rolling back images does not reverse schema changes or restore earlier data. Backup and restore are separate operations, and no restore is simulated here.</div>
+<div class="cards" style="margin-bottom:10px">
+<div class="card"><h3><code>latest</code></h3><p>Moving tag. Always points to the newest published build, so it cannot reliably identify a past version.</p></div>
+<div class="card"><h3><code>&lt;git-commit-sha&gt;</code></h3><p>Version-specific tag. Identifies the build that came from one commit and can be selected for rollback.</p></div></div>
+<div class="row">
+<label>Example version <select id="b-tag"><option>EXAMPLE-sha-aaaaaaa (previous)</option><option>EXAMPLE-sha-bbbbbbb (older)</option></select></label>
+<label>Outcome <select id="b-sc"><option value="ok">Image rollback succeeds</option><option value="tag">Image tag unavailable</option><option value="start">Service fails to start</option><option value="health">Health checks fail</option><option value="inc">Recovery incomplete</option></select></label>
+</div>
+<div class="row"><button id="b-play">▶ Play</button><button id="b-step">Step ›</button><button id="b-reset">Reset</button></div>
+<div id="b-fl"></div><div class="out" id="b-out" role="status"></div><div class="det" id="b-det" aria-live="polite"></div>
+</section>
+
+<section id="x" role="tabpanel" aria-labelledby="t-x" class="hid">
+<div class="row" id="x-f" role="group" aria-label="Filter by status"><button data-f="all" aria-pressed="true">All</button><button data-f="impl" aria-pressed="false">Implemented</button><button data-f="pend" aria-pressed="false">Pending verification</button><button data-f="plan" aria-pressed="false">Planned</button></div>
+<div class="cards" id="x-cards"></div>
+<h2>Database operations</h2>
+<div class="cards">
+<div class="card"><h3>Persistence</h3><p><code>mysql_data</code> survives container recreation. It does not protect against deletion, corruption, or a bad migration.</p></div>
+<div class="card"><h3>Backup &amp; restore</h3><p>A separate task. <span class="b plan">Planned</span> A tested backup and restore procedure is not part of this model.</p></div>
+<div class="card"><h3>Compatibility</h3><p>Design migrations so the current and previous app versions both work with the schema, which makes image rollback safer.</p></div>
+</div>
+<div class="det"><h3>Migration check (example)</h3>
+<p class="s" style="margin:0 0 6px">Versioned SQL files; applied versions are recorded in a tracking table. File names below are examples.</p>
+<ul id="m-list" style="margin:0 0 8px;padding-left:20px"></ul><button id="m-run">Simulate migration check</button> <button id="m-reset">Reset</button></div>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const ST={pending:'○ Pending',run:'… Running',ok:'✓ Passed',fail:'✕ Failed',skip:'– Skipped',warn:'⚠ Warning'};
+function Sim(o){
+ let s,pos,timer,sel,fin,p;const n=o.items.length;
+ function stop(){clearInterval(timer);timer=null;o.play.textContent='▶ Play';if(pos<n&&s[pos]==='run')s[pos]='pending'}
+ function reset(){stop();s=Array(n).fill('pending');pos=0;sel=-1;fin=false;p=null;o.out.innerHTML='';draw();det()}
+ function step(){
+  if(fin)return;if(!p)p=o.plan();
+  const i=pos;s[i]=i===p.fail?'fail':i===p.warn?'warn':'ok';pos++;sel=i;
+  if(s[i]==='fail'){for(let j=pos;j<n;j++)s[j]='skip';pos=n}
+  if(pos>=n){fin=true;stop();o.out.innerHTML=o.sum(p)}else if(timer)s[pos]='run';
+  draw();det()}
+ function draw(){let h='',g=-1;
+  o.items.forEach((x,i)=>{if(x.g!==g){if(g>=0)h+='</ul></section><div class="dn" aria-hidden="true">↓</div>';h+=`<section class="grp"><h4>${o.groups[x.g]}</h4><ul class="fl">`;g=x.g}
+   h+=`<li><button class="nd ${x.k} ${s[i]}" data-i="${i}" aria-pressed="${i===sel}"><b>${i+1}. ${x.t}</b><small>${x.w}</small><em>${ST[s[i]]}</em></button></li>`});
+  o.el.innerHTML=h+'</ul></section>'}
+ function det(){const x=o.items[sel];if(!x){o.det.innerHTML='<p style="margin:0">Press Play or Step, or click any stage. Choose a scenario to see a failure path.</p>';return}
+  const st=s[sel];let fb='';
+  if(st==='skip')fb='<div class="fb">Skipped because an earlier stage failed or a required dependency was not met.</div>';
+  if((st==='fail'||st==='warn')&&p&&p.msg)fb=`<div class="fb">${p.msg}</div>`;
+  o.det.innerHTML=`<h3>${x.t}</h3><span class="b ${st==='pending'?'plan':st==='skip'?'plan':st}">${ST[st]}</span> <span class="b plan">${x.w}</span><p style="margin:6px 0 0">${x.d}</p><ul>${x.l.map(y=>`<li>${y}</li>`).join('')}</ul>${fb}`}
+ o.el.onclick=e=>{const b=e.target.closest('.nd');if(!b)return;sel=+b.dataset.i;draw();det();o.el.querySelector(`[data-i="${sel}"]`).focus()};
+ o.play.onclick=()=>{if(timer){stop();draw();return}if(fin)reset();timer=setInterval(step,1100);o.play.textContent='⏸ Pause';s[pos]='run';draw()};
+ o.stepb.onclick=()=>{stop();if(fin)reset();step()};
+ o.rst.onclick=reset;o.reset=reset;reset();return o}
+
+const PI=[
+{g:0,k:'gh',t:'Commit &amp; push to main',w:'Developer workstation',d:'Developer commits with Git and pushes to the <code>main</code> branch.',l:['Git keeps version history','Push to main triggers GitHub Actions','Local env files are excluded from Git']},
+{g:0,k:'gh',t:'GitHub receives changes',w:'GitHub repository',d:'GitHub stores the commit and starts the workflow.',l:['Workflow has two jobs: build-and-push, then deploy']},
+{g:1,k:'bd',t:'Checkout source',w:'GitHub-hosted Ubuntu runner',d:'The runner checks out the repository code.',l:[]},
+{g:1,k:'bd',t:'Build Docker images',w:'Frontend (Nginx) + backend (Flask)',d:'Builds the frontend and backend images; the backend image runs as a non-root user.',l:['Images are tagged with the Git commit SHA','If the build fails, later steps and the deploy job do not run']},
+{g:1,k:'sc',t:'Trivy scan (backend)',w:'HIGH and CRITICAL · exit-code: 0',d:'Scans the backend image for known vulnerabilities in OS packages and dependencies.',l:['<b>Actual:</b> findings are reported but do not fail the workflow (<code>exit-code: 0</code>)','<b>Proposed:</b> block on findings; this needs an explicit policy decision and a workflow change','<b>Possible improvement:</b> the scan builds an image and the push step builds separately, so the scanned image is not guaranteed to be the published one. Scan and push the same artifact.']},
+{g:1,k:'hub',t:'Push to Docker Hub',w:'Frontend + backend images',d:'Publishes both images with two kinds of tag.',l:['<code>latest</code> (moving) and <code>&lt;commit-sha&gt;</code> (traceable, used for rollback)','Docker Hub credentials come from GitHub repository secrets (values never shown)']},
+{g:2,k:'gh',t:'Gate: needs build-and-push',w:'Workflow dependency',d:'The deploy job starts only if the build-and-push job succeeded.',l:['If any earlier job step fails, this gate is not satisfied and deployment is skipped']},
+{g:3,k:'dp',t:'Checkout repository',w:'Self-hosted runner · AlmaLinux VM',d:'The runner on the VM checks out the repository so deployment scripts are available.',l:['The runner executes commands on the VM, so it is a sensitive access boundary']},
+{g:3,k:'dp',t:'Pull SHA images &amp; update Compose',w:'Docker Compose on the VM',d:'The deployment script pulls the selected SHA-tagged images and updates the services.',l:['Compose defines frontend (8080), backend (5000), and MySQL (internal only)','Network, health checks, dependencies, restart policies, and <code>mysql_data</code> volume']},
+{g:3,k:'db',t:'Run database migrations',w:'Versioned SQL + tracking table',d:'Applies migrations that have not run yet and records them.',l:['Previously applied versions are skipped','Image rollback later does not undo these schema changes']},
+{g:3,k:'app',t:'Health checks &amp; verification',w:'Frontend, backend, database',d:'Confirms the application endpoints respond and the backend can reach MySQL.',l:['Endpoints: <code>/health</code>, <code>/api/hello</code>, <code>/api/db-test</code>']}];
+const PG=['Trigger','Job 1 · Build and Push Docker Images — GitHub-hosted Ubuntu runner','Dependency','Job 2 · Deploy to AlmaLinux VM — self-hosted runner'];
+const PS={
+none:{fail:-1,warn:-1,sum:'<span class="b ok">Simulated success</span> All stages passed in this model. Nothing was deployed.'},
+build:{fail:3,msg:'<span class="b act">Actual behavior</span> The build step fails, remaining steps are skipped, and the deploy job never starts.<br><b>Troubleshoot:</b> read the Docker build log; check the Dockerfile, dependency file, and base image availability.'},
+trivy:{fail:-1,warn:4,msg:'<span class="b act">Actual behavior</span> Trivy prints HIGH/CRITICAL findings, but <code>exit-code: 0</code> lets the pipeline continue and publish.<br><b>Next step:</b> review the report; blocking would be a policy and workflow change.'},
+push:{fail:5,msg:'<span class="b act">Expected behavior</span> The push fails, so the deploy job is not satisfied and does not proceed.<br><b>Troubleshoot:</b> check Docker Hub secret names and token permissions, repository names, network, and rate limits.'},
+deploy:{fail:8,msg:'<span class="b act">Expected behavior</span> The deploy job fails and is reported as failed.<br><b>Troubleshoot:</b> is the runner online? Check disk space, image pull errors, <code>docker compose config</code>, and container logs. If needed, use the rollback procedure.'},
+health:{fail:10,msg:'<span class="b act">Expected behavior</span> Verification fails, so the deployment is reported as failed. New containers may still be running.<br><b>Troubleshoot:</b> check <code>docker compose logs</code>, call <code>/health</code> and <code>/api/db-test</code>, then decide whether to roll back to a previous SHA.'}};
+const pSim=Sim({el:$('#p-fl'),det:$('#p-det'),out:$('#p-out'),items:PI,groups:PG,play:$('#p-play'),stepb:$('#p-step'),rst:$('#p-reset'),
+ plan(){const k=$('#p-sc').value,x={...PS[k]};
+  if(k==='trivy'&&$('#p-prop').checked){x.fail=4;x.warn=-1;x.msg='<span class="b prop">Proposed behavior (not implemented)</span> With a blocking policy (<code>exit-code: 1</code>), findings fail the job and nothing is published or deployed.'}
+  return x},
+ sum(p){if(p.sum)return p.sum;if(p.fail<0)return '<span class="b warn">Completed with warning</span> '+p.msg;return '<span class="b fail">Pipeline failed</span> '+p.msg}});
+$('#p-sc').onchange=$('#p-prop').onchange=()=>pSim.reset();
+
+const BI=[
+{g:0,k:'dp',t:'Select previous version',w:'Rollback script',d:'Choose which earlier release to run.',l:['Selected from the example list above (fictional tags)']},
+{g:0,k:'gh',t:'Identify Git commit SHA',w:'Git history',d:'Map the release to its commit SHA.',l:['SHA tags tie an image to one commit']},
+{g:0,k:'hub',t:'Confirm image tags exist',w:'Docker Hub',d:'Check that both frontend and backend images exist for that SHA.',l:['A missing tag stops the rollback before anything changes']},
+{g:0,k:'hub',t:'Pull selected images',w:'AlmaLinux VM',d:'Pull the frontend and backend images for the chosen SHA.',l:[]},
+{g:0,k:'dp',t:'Update Compose services',w:'Docker Compose',d:'Restart the services using the selected image versions.',l:['<code>mysql_data</code> volume stays in place']},
+{g:0,k:'app',t:'Wait for backend ready',w:'Health check',d:'Wait until the backend reports healthy.',l:[]},
+{g:0,k:'app',t:'Verify frontend, /health, DB',w:'Frontend, backend, MySQL',d:'Check the web page, the backend health endpoint, and database connectivity.',l:[]},
+{g:0,k:'gh',t:'Report outcome',w:'Rollback script',d:'Summarize what was and was not recovered.',l:['Image rollback only; database schema and data are not rolled back']}];
+const BS={
+ok:{fail:-1,warn:-1,sum:'<span class="b ok">Simulated image rollback succeeded</span> The application would run the selected images. <b>The database schema and data were not rolled back</b>, and no restore was performed.'},
+tag:{fail:2,msg:'The frontend or backend image for that SHA is not found. The rollback stops before any change.<br><b>Next step:</b> pick another SHA or check the Docker Hub repository.'},
+start:{fail:5,msg:'Containers were updated, but the backend never became ready.<br><b>Troubleshoot:</b> <code>docker compose logs backend</code>, check for schema mismatch, dependencies, and credentials.'},
+health:{fail:6,msg:'A verification check failed (for example <code>/api/db-test</code>).<br><b>Troubleshoot:</b> check MySQL health and whether the older app fits the current schema.'},
+inc:{fail:-1,warn:7,msg:'Checks passed, but recovery is <b>incomplete</b>: the older images may not match the current database schema, and data changes are not reverted. A tested backup and restore is a separate task.'}};
+const bSim=Sim({el:$('#b-fl'),det:$('#b-det'),out:$('#b-out'),items:BI,groups:['Image rollback stages (simulated)'],play:$('#b-play'),stepb:$('#b-step'),rst:$('#b-reset'),
+ plan(){return BS[$('#b-sc').value]},
+ sum(p){if(p.sum)return p.sum;if(p.fail<0)return '<span class="b warn">Incomplete recovery</span> '+p.msg;return '<span class="b fail">Rollback failed</span> '+p.msg}});
+$('#b-sc').onchange=$('#b-tag').onchange=()=>bSim.reset();
+
+const RN={b:'<b>Browser</b>: calls the frontend at VM-IP:8080 and the backend API directly at VM-IP:5000.',f:'<b>Frontend (Nginx)</b>: serves the web page. Host port 8080 maps to container port 80.',k:'<b>Backend (Flask)</b>: exposes <code>/health</code>, <code>/api/hello</code>, <code>/api/db-test</code> on port 5000. Only <code>/api/db-test</code> uses MySQL in this model.',m:'<b>MySQL 8.4</b>: service name <code>mysql</code>, port 3306, database <code>devopsdb</code>. Not published to a host port; only reachable on the Docker network. Data in <code>mysql_data</code>.'};
+const RQ={'/':[['b','Browser → VM-IP:8080'],['f','Nginx (container :80) returns the static page'],['done','Backend and MySQL are not involved']],
+'/health':[['b','Browser → VM-IP:5000/health'],['k','Flask answers the health check'],['done','Handled by the backend alone; no MySQL path in this model']],
+'/api/hello':[['b','Browser → VM-IP:5000/api/hello'],['k','Flask returns the API response'],['done','Handled by the backend alone']],
+'/api/db-test':[['b','Browser → VM-IP:5000/api/db-test'],['k','Flask receives the request'],['m','Backend connects to host <code>mysql</code>:3306 over the Docker network and runs a simple query'],['done','Result returns to the browser through the backend']]};
+let rt=null;
+function lit(a){['b','f','k','m'].forEach(i=>$('#n-'+i).classList.toggle('lit',a.includes(i)))}
+function rReset(){clearInterval(rt);lit([]);$('#r-log').textContent='Choose a request above.'}
+$$('[data-q]').forEach(b=>b.onclick=()=>{rReset();const st=RQ[b.dataset.q];let i=0,on=[],h='<b>'+(b.dataset.q==='/'?'GET /':'GET '+b.dataset.q)+'</b>';
+ rt=setInterval(()=>{if(i>=st.length){clearInterval(rt);return}const[n,m]=st[i++];if(n!=='done')on.push(n);lit(on);h+='<div>▸ '+m+'</div>';$('#r-log').innerHTML=h},800)});
+$('#r-reset').onclick=rReset;
+$$('[data-n]').forEach(b=>b.onclick=()=>{$$('[data-n]').forEach(x=>x.setAttribute('aria-pressed',x===b));$('#r-det').innerHTML=RN[b.dataset.n]});
+
+const SC=[
+['impl','GitHub repository secrets','Docker Hub credentials are stored as repository secrets and referenced by the workflow. Values are never shown here.'],
+['impl','Restricted secret file permissions','Local secret files and their parent directory have restricted host permissions; env files are excluded from Git.'],
+['impl','Non-root backend','The backend container runs as a non-root user.'],
+['impl','MySQL not published','MySQL has no host port; only containers on the Docker network can reach it.'],
+['impl','Trivy scanning (report-only)','Backend image scanned for HIGH and CRITICAL findings. Findings are reported, not enforced (<code>exit-code: 0</code>).'],
+['impl','Git ignore rules','<code>.env</code>, Python cache directories, and compiled Python files are ignored.'],
+['impl','Health checks','Compose health checks and deployment verification confirm application and database readiness.'],
+['pend','Docker secret mounts for DB credentials','Configuration is prepared to supply database credentials through secret mounts instead of plain environment variables. End-to-end deployment and verification are not yet confirmed.'],
+['plan','Trivy blocking policy','Fail the pipeline on HIGH/CRITICAL findings. Needs a policy decision and a workflow change.'],
+['plan','Scan the published image','Scan the same artifact that is pushed, so the scanned image is the published one.'],
+['plan','Self-hosted runner hardening','The runner executes deployment commands on the AlmaLinux VM, so treat it as a sensitive boundary. Consider least privilege and restricted access.'],
+['plan','Tested backup &amp; restore','A verified database backup and restore procedure, separate from image rollback.']];
+const LB={impl:'Implemented',pend:'Pending verification',plan:'Planned'};
+function xr(f){$('#x-cards').innerHTML=SC.filter(c=>f==='all'||c[0]===f).map(c=>`<div class="card"><h3>${c[1]}</h3><span class="b ${c[0]}">${LB[c[0]]}</span><p style="margin-top:6px">${c[2]}</p></div>`).join('')}
+$$('[data-f]').forEach(b=>b.onclick=()=>{$$('[data-f]').forEach(x=>x.setAttribute('aria-pressed',x===b));xr(b.dataset.f)});xr('all');
+const MG=['001_example_create_tables.sql','002_example_add_column.sql','003_example_new_change.sql'];
+function mr(run){$('#m-list').innerHTML=MG.map((m,i)=>`<li><code>${m}</code> ${!run?'':i<2?'<span class="b plan">skipped, already recorded</span>':'<span class="b warn">would apply, then record</span>'}</li>`).join('')}
+$('#m-run').onclick=()=>mr(true);$('#m-reset').onclick=()=>mr(false);mr(false);
+
+const tabs=$$('[role=tab]');
+function showTab(t){tabs.forEach(x=>{const on=x===t;x.setAttribute('aria-selected',on);x.tabIndex=on?0:-1;$('#'+x.getAttribute('aria-controls')).classList.toggle('hid',!on)})}
+tabs.forEach((t,i)=>{t.onclick=()=>showTab(t);t.onkeydown=e=>{const d=e.key==='ArrowRight'?1:e.key==='ArrowLeft'?-1:0;if(d){const n=tabs[(i+d+tabs.length)%tabs.length];showTab(n);n.focus()}}});
+showTab(tabs[0]);
+</script>
+</body>
+</html>
