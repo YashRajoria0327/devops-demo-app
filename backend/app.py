@@ -6,6 +6,12 @@ from flask import Flask
 app = Flask(__name__)
 
 
+def read_secret(path):
+    with open(path, "r", encoding="utf-8") as secret_file:
+        return secret_file.read().strip()
+
+
+
 @app.route("/health")
 def health():
     return {"status": "healthy"}
@@ -21,7 +27,7 @@ def db_test():
     connection = pymysql.connect(
         host=os.environ["DB_HOST"],
         user=os.environ["DB_USER"],
-        password=os.environ["DB_PASSWORD"],
+        password=read_secret("/run/secrets/mysql_password"),
         database=os.environ["DB_NAME"],
         port=int(os.environ.get("DB_PORT", "3306")),
     )

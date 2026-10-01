@@ -20,7 +20,6 @@ services:
       DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE}
       DB_USER: ${MYSQL_USER}
-      DB_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "5000:5000"
     depends_on:
@@ -40,23 +39,25 @@ services:
       start_period: 20s
     networks:
       - devops-net
+    secrets:
+      - mysql_password
     restart: unless-stopped
 
   mysql:
     image: mysql:8.4
     container_name: devops-demo-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
       test:
         [
           "CMD-SHELL",
-          "mysqladmin ping -h localhost -u root -p$$MYSQL_ROOT_PASSWORD --silent"
+          "MYSQL_PWD=$$(cat /run/secrets/mysql_root_password) mysqladmin ping -h localhost -u root --silent"
         ]
       interval: 10s
       timeout: 5s
@@ -64,6 +65,9 @@ services:
       start_period: 30s
     networks:
       - devops-net
+    secrets:
+      - mysql_password
+      - mysql_root_password
     restart: unless-stopped
 
 networks:
@@ -73,3 +77,10 @@ volumes:
   mysql-data:
     external: true
     name: mysql_data
+
+secrets:
+  mysql_password:
+    file: /home/devops/.config/devops-demo-app/secrets/mysql_password
+
+  mysql_root_password:
+    file: /home/devops/.config/devops-demo-app/secrets/mysql_root_password
