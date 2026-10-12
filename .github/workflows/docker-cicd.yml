@@ -85,26 +85,3 @@ jobs:
           curl -f http://localhost:8080
           curl -f http://localhost:5000/health
           curl -f http://localhost:5000/api/db-test
-
-  # -------------------------
-  # CD: Deploy to AlmaLinux
-  # -------------------------
-  deploy:
-    name: Deploy to AlmaLinux VM
-    needs: build-and-push
-    runs-on: self-hosted
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Deploy application
-        run: |
-          chmod +x scripts/deploy.sh
-          ./scripts/deploy.sh ${{ github.sha }}
-
-      - name: Verify application
-        run: |
-          curl -f http://localhost:8080
-          curl -f http://localhost:5000/health
-          curl -f http://localhost:5000/api/db-test
