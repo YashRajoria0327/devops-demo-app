@@ -1,5 +1,12 @@
-*.pem
+# Secrets and environment configuration
 .env
+.env.*
+!.env.example
+secrets/
 
+# Private keys and certificates
+*.pem
+
+# Python generated files
 __pycache__/
-*.pyc
+*.py[cod]
